@@ -1,8 +1,11 @@
 setup.py
 vllm_runner/__init__.py
 vllm_runner/app.py
+vllm_runner/client_runner.py
+vllm_runner/gpu_info.py
 vllm_runner/scan_gpus.py
-vllm_runner/tmux_manager.py
+vllm_runner/scan_vllm_process.py
+vllm_runner/vllm_dspy.py
 vllm_runner.egg-info/PKG-INFO
 vllm_runner.egg-info/SOURCES.txt
 vllm_runner.egg-info/dependency_links.txt

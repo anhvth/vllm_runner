@@ -1,5 +1,6 @@
 import subprocess
 import socket
+import time
 from loguru import logger
 
 
@@ -140,6 +141,29 @@ def free_vllm(at_port=None, model_name="7B", do_kill=False):
     except Exception as e:
         logger.error(f"Unexpected error: {e}")
         return []
+
+
+def kill_existing_vllm_processes():
+    """Finds and kills all running vllm processes, then waits until they are terminated."""
+    try:
+        # Kill all vllm processes
+        subprocess.run("pgrep -f vllm | xargs -r kill -9", shell=True, check=False)
+        logger.info("Attempting to kill all running vllm processes...")
+
+        # Wait in a loop until all vllm processes are completely terminated
+        while True:
+            result = subprocess.run(
+                "pgrep -f vllm", shell=True, check=False, stdout=subprocess.PIPE
+            )
+            if result.returncode != 0:  # No vllm processes found
+                logger.info("All vllm processes have been successfully terminated.")
+                break
+            else:
+                logger.warning("Waiting for vllm processes to terminate...")
+                time.sleep(1)  # Wait for 1 second before checking again
+
+    except Exception as e:
+        logger.error(f"Error while killing vllm processes: {e}")
 
 
 if __name__ == "__main__":

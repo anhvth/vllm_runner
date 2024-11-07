@@ -1,0 +1,3 @@
+GPU IDs (comma-separated),Tensor Parallel Size,Max Model Length,Model Path,Port Start,Model Size,Force Kill Existing Processes,GPU Utilization Threshold,output,timestamp
+"4,7",1,3000,,2800,7B,false,0.95,,2024-11-07 14:48:21.053092
+"4,7",1,3000,,2800,7B,false,0.95,,2024-11-07 14:48:22.653627

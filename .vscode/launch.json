@@ -1,0 +1,57 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Python: vllm_runner/app.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "vllm_runner/app.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "DEBUG": "1"
+            },
+            "args": []
+        },
+        {
+            "name": "latest",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "vllm_runner/tmux_manager.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "DEBUG": "1"
+            },
+            "args": [
+                "-tp",
+                "2",
+                "-l",
+                "3000"
+            ]
+        },
+        {
+            "name": "Python: vllm_runner/tmux_manager.py",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "vllm_runner/tmux_manager.py",
+            "console": "integratedTerminal",
+            "justMyCode": true,
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "PYTHONPATH": "${workspaceFolder}",
+                "DEBUG": "1"
+            },
+            "args": [
+                "-tp",
+                "2",
+                "-l",
+                "3000"
+            ]
+        }
+    ]
+}

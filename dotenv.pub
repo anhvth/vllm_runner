@@ -1,1 +1,1 @@
-vllm=/home/ubuntu/.conda/envs/py311/bin/vllm
+VLLM_PATH=/home/ubuntu/.conda/envs/py311/bin/vllm

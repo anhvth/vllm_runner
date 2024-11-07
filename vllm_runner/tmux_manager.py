@@ -1,71 +1,38 @@
 import argparse
-import json
 import os
-import socket
 import subprocess
 import sys
-import time
-
-from loguru import logger
-
-from vllm_runner.scan_gpus import scan_available_gpus, scanfree_port
 import threading
+from loguru import logger
+from vllm_runner.scan_gpus import (
+    kill_existing_vllm_processes,
+    scan_available_gpus,
+    scanfree_port,
+)
+from dotenv import load_dotenv
+load_dotenv('dotenv.pub')
 
+VLLM_PATH = os.environ.get("VLLM_PATH", "vllm")
 FREE_PORT_LOCK = threading.Lock()
+FREE_GPU_LOCK = threading.Lock()
 FREE_PORT = scanfree_port()
 GPUS = scan_available_gpus()
 
+
 def select_port():
     with FREE_PORT_LOCK:
-        port = FREE_PORT.pop(0)
-    return port
+        return FREE_PORT.pop(0)
 
 
-def kill_existing_vllm_processes():
-    """Finds and kills all running vllm processes, then waits until they are terminated."""
-    try:
-        # Kill all vllm processes
-        subprocess.run("pgrep -f vllm | xargs -r kill -9", shell=True, check=False)
-        logger.info("Attempting to kill all running vllm processes...")
-
-        # Wait in a loop until all vllm processes are completely terminated
-        while True:
-            result = subprocess.run(
-                "pgrep -f vllm", shell=True, check=False, stdout=subprocess.PIPE
-            )
-            if result.returncode != 0:  # No vllm processes found
-                logger.info("All vllm processes have been successfully terminated.")
-                break
-            else:
-                logger.warning("Waiting for vllm processes to terminate...")
-                time.sleep(1)  # Wait for 1 second before checking again
-
-    except Exception as e:
-        logger.error(f"Error while killing vllm processes: {e}")
-
-
-def parse_gpu_ids(gpu_ids_str):
-    """Parses a string of GPU IDs in the format '0,1,3,4,5,6' to a list of strings."""
-    try:
-        # Split by commas and strip whitespace
-        gpu_ids = [gpu.strip() for gpu in gpu_ids_str.split(",") if gpu.strip()]
-        # Validate that each GPU ID is an integer
-        for gpu in gpu_ids:
-            if not gpu.isdigit():
-                raise ValueError(f"Invalid GPU ID: {gpu}")
-        logger.debug(f"Parsed GPU IDs: {gpu_ids} from string: {gpu_ids_str}")
-        return gpu_ids
-    except ValueError as e:
-        logger.error("GPU IDs must be a comma-separated list of integers.")
-        raise argparse.ArgumentTypeError(
-            "GPU IDs must be a comma-separated list of integers."
-        ) from e
+def get_gpu_ids(gpus, tp):
+    with FREE_GPU_LOCK:
+        gpu_ids = gpus[:tp]
+        del gpus[:tp]
+    return gpu_ids
 
 
 def create_tmux_window(session_name, window_name, command):
-    """Create a new tmux window within the specified session and run the given command."""
     try:
-        # Create a new window in the session and run the command
         tmux_command = f'tmux new-window -t {session_name} -n {window_name} "{command}"'
         subprocess.run(tmux_command, shell=True, check=True)
         logger.info(
@@ -78,9 +45,7 @@ def create_tmux_window(session_name, window_name, command):
 
 
 def create_tmux_session(session_name, initial_command, initial_window_name):
-    """Create a new tmux session with the first window running the initial command."""
     try:
-        # Create a new detached tmux session with the initial window running the command
         tmux_command = f'tmux new-session -d -s {session_name} -n {initial_window_name} "{initial_command}"'
         subprocess.run(tmux_command, shell=True, check=True)
         logger.info(
@@ -92,16 +57,13 @@ def create_tmux_session(session_name, initial_command, initial_window_name):
         logger.error(f"Unexpected error creating tmux session '{session_name}': {e}")
 
 
-def main():
-    # Set up argument parsing
-    parser = argparse.ArgumentParser(
-        description="Launch vllm servers in tmux windows. Example usage: python tools/vllm_tmux_manager.py -s 72B -g 1234 -l 15000 -p 2804"
-    )
+def parse_arguments():
+    parser = argparse.ArgumentParser(description="Launch vllm servers in tmux windows.")
     parser.add_argument(
         "--gpu-ids",
         "-g",
         type=str,
-        default=None
+        default=None,
         help='Comma-separated list of GPU IDs (default: "0,1,3,4,5,6")',
     )
     parser.add_argument(
@@ -143,12 +105,12 @@ def main():
         type=float,
         help="GPU utilization threshold (default: 0.95)",
     )
+    return parser
 
-    args = parser.parse_args()
-    # Define tmux session name
+
+def main(args):
     session_name = "vllm_runner"
 
-    # Kill existing vllm processes and tmux session if the -f flag is set
     if args.force_kill:
         kill_existing_vllm_processes()
         try:
@@ -159,101 +121,66 @@ def main():
         except subprocess.CalledProcessError:
             logger.warning(f"No existing tmux session named '{session_name}' to kill.")
 
-    # Check if tmux session exists
-    session_exists = False
-    try:
-        result = subprocess.run(
+    session_exists = (
+        subprocess.run(
             f"tmux has-session -t {session_name}", shell=True, check=False
-        )
-        if result.returncode == 0:
-            session_exists = True
-            if not args.force_kill:
-                logger.info(
-                    f"Tmux session '{session_name}' exists. Appending new windows."
-                )
-        else:
-            session_exists = False
-    except Exception as e:
-        logger.error(f"Error checking tmux session '{session_name}': {e}")
-        sys.exit(1)
+        ).returncode
+        == 0
+    )
 
-    # Parse GPU IDs
-    try:
-        gpu_ids = parse_gpu_ids(args.gpu_ids)
-    except argparse.ArgumentTypeError as e:
-        logger.error(e)
-        sys.exit(1)
+    if session_exists and not args.force_kill:
+        logger.info(f"Tmux session '{session_name}' exists. Appending new windows.")
 
-    max_length = args.max_length
-    model_size = args.model_size
-
-    # Loop over each GPU ID to create commands
-    commands = []
-    propose_port = args.port_start
-    # for i, _gpu_ids in enumerate(gpu_ids):
     tp = args.tp
-    for i in range(0, len(gpu_ids), tp):
-        _gpu_ids = gpu_ids[i : i + tp]
-        propose_port = select_port(propose_port)
-        if len(_gpu_ids) != tp:
-            logger.error(
-                f"Number of GPUs ({len(_gpu_ids)}) must be a multiple of tensor parallel size ({tp})."
-            )
-            break
+    commands = []
+
+    def get_command():
+        propose_port = select_port()
+        _gpu_ids = get_gpu_ids(GPUS, tp)
+        logger.info(f"Selected GPUs: {_gpu_ids}")
         gpu_str = ",".join(list(_gpu_ids))
-        model = (
-            args.model_path or f"Qwen/Qwen2.5-{model_size}-Instruct-AWQ"
-        )  
-        # Command to be executed in the tmux window
-        if args.model_path:
-            if "/saves/":  # hardcoded for now, need to change this later
-                served_model_name = args.model_path.split("/saves/")[-1]
-            else:
-                served_model_name = os.path.basename(args.model_path)
-        else:
-            served_model_name = model.split("/")[-1]
+        model = args.model_path or f"Qwen/Qwen2.5-{args.model_size}-Instruct-AWQ"
+        served_model_name = (
+            os.path.basename(args.model_path)
+            if args.model_path
+            else model.split("/")[-1]
+        )
         command = (
             f"CUDA_VISIBLE_DEVICES={gpu_str} "
-            f"vllm serve {model} "
+            f"{VLLM_PATH} serve {model} "
             f"--tensor-parallel-size {args.tp} "
             f"--gpu-memory-utilization {args.gpu_util} "
             f"--trust-remote-code "
             f"--dtype half "
             f"--enforce-eager "
-            f"--max-model-len {max_length} "
+            f"--max-model-len {args.max_length} "
             f"--swap-space 16 "
             f"--port {propose_port} "
             f"--served-model-name {served_model_name} "
             f"--enable-prefix-caching "
         )
-
-        print(f"{command}")
-        # Window name will be based on the port
         window_name = f"vllm_{propose_port}"
-        propose_port += 1
-
         commands.append((window_name, command))
 
+    get_command()
+    logger.info(f"Commands: {commands}")
+
     if not commands:
-        logger.error("No GPU IDs provided. Exiting.")
+        logger.error("No commands to execute. Exiting.")
         sys.exit(1)
 
     if not session_exists:
-        # Create the tmux session with the first window
         first_window_name, first_command = commands.pop(0)
         create_tmux_session(session_name, first_command, first_window_name)
 
-        # Create additional windows
-        for window_name, command in commands:
-            create_tmux_window(session_name, window_name, command)
-    else:
-        # Append new windows to existing session
-        for window_name, command in commands:
-            create_tmux_window(session_name, window_name, command)
+    for window_name, command in commands:
+        create_tmux_window(session_name, window_name, command)
+        logger.success(f"Created window '{window_name}' with command: {command}")
 
-    logger.info("All tmux windows have been created successfully.")
     logger.info(f"To attach to the tmux session, use: tmux attach -t {session_name}")
 
 
 if __name__ == "__main__":
-    main()
+    parser = parse_arguments()
+    args = parser.parse_args()
+    main(args)

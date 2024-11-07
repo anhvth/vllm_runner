@@ -1,0 +1,5 @@
+Metadata-Version: 2.1
+Name: vllm_runner
+Version: 0.1
+Requires-Dist: gradio
+Requires-Dist: loguru

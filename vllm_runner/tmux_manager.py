@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 load_dotenv('dotenv.pub')
 
 VLLM_PATH = os.environ.get("VLLM_PATH", "vllm")
+assert os.path.exists(VLLM_PATH), f"vLLM path '{VLLM_PATH}' does not exist!"
 FREE_PORT_LOCK = threading.Lock()
 FREE_GPU_LOCK = threading.Lock()
 FREE_PORT = scanfree_port()

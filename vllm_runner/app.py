@@ -1,15 +1,21 @@
-import gradio as gr
-from vllm_runner.tmux_manager import parse_arguments, main
 import subprocess
 import time
+
+import gradio as gr
+
 from vllm_runner.scan_gpus import scan_available_gpus, scanfree_port
+from vllm_runner.tmux_manager import main, parse_arguments
 
 
 def get_gpu_stats():
     """Get formatted GPU statistics."""
     try:
         result = subprocess.run(
-            shell=True,
+            [
+                "nvidia-smi",
+                "--query-gpu=id,name,temperature.gpu,utilization.gpu,memory.used,memory.total,power.draw",
+                "--format=csv,noheader,nounits",
+            ],
             check=True,
             stdout=subprocess.PIPE,
         )
@@ -33,7 +39,15 @@ def get_gpu_stats():
 
 
 def run_tmux_manager_gradio(
-    gpu_ids, tp, max_length, model_path, port_start, model_size, force_kill, gpu_util
+    gpu_ids,
+    tp,
+    max_length,
+    model_path,
+    port_start,
+    model_size,
+    force_kill,
+    gpu_util,
+    new_param,
 ):
     parser = parse_arguments()
     # Scan for available GPUs
@@ -42,34 +56,42 @@ def run_tmux_manager_gradio(
         return "No available GPUs found!"
 
     # Parse requested GPU count
-    requested_count = len(gpu_ids.strip().split(',')) if gpu_ids else 1
-    
+    requested_count = len(gpu_ids.strip().split(",")) if gpu_ids else 1
+
     # Check if we have enough GPUs
     if len(available_gpus) < requested_count:
         return f"Not enough available GPUs! Requested {requested_count}, but only {len(available_gpus)} available"
 
     # Get the required number of GPUs
     selected_gpus = available_gpus[:requested_count]
-    gpu_ids = ','.join(selected_gpus)
+    gpu_ids = ",".join(selected_gpus)
 
     # Get available ports
     available_ports = scanfree_port(start=int(port_start) if port_start else 2800)
     if not available_ports:
         return "No available ports found!"
-    
+
     port_start = available_ports[0]
 
     # Prepare arguments
     parser = parse_arguments()
     args_list = [
-        "--gpu-ids", gpu_ids,
-        "-tp", str(int(tp)),
-        "--max-length", str(int(max_length)),
-        "--port-start", str(port_start),
-        "--model-size", model_size,
-        "--gpu-util", str(gpu_util)
+        "--gpu-ids",
+        gpu_ids,
+        "-tp",
+        str(int(tp)),
+        "--max-length",
+        str(int(max_length)),
+        "--port-start",
+        str(port_start),
+        "--model-size",
+        model_size,
+        "--gpu-util",
+        str(gpu_util),
+        "--new-param",
+        new_param,
     ]
-    
+
     if model_path:
         args_list.extend(["--model-path", model_path])
     if force_kill:
@@ -82,6 +104,13 @@ def run_tmux_manager_gradio(
 
 def refresh_stats():
     return get_gpu_stats()
+
+
+def gpu_monitor_live():
+    """Generator function to yield GPU stats periodically."""
+    while True:
+        yield get_gpu_stats()
+        time.sleep(5)  # Update every 5 seconds
 
 
 with gr.Blocks(title="Tmux Manager with GPU Monitor") as iface:
@@ -97,18 +126,19 @@ with gr.Blocks(title="Tmux Manager with GPU Monitor") as iface:
             gpu_util = gr.Slider(
                 label="GPU Utilization Threshold", minimum=0.0, maximum=1.0, value=0.95
             )
+            new_param = gr.Textbox(label="New Parameter", value="default")
             submit_btn = gr.Button("Run Tmux Manager")
             output = gr.Textbox(label="Output")
 
         with gr.Column(scale=1):
-            gpu_monitor = gr.Textbox(
-                label="GPU Monitor",
-                value=get_gpu_stats(),
-                lines=15,
-                max_lines=20,
-                every=5,  # Add periodic update here
-                interactive=False,
-            )
+            with gr.Live(gpu_monitor_live) as live:
+                gpu_monitor = gr.Textbox(
+                    label="GPU Monitor",
+                    value=get_gpu_stats(),
+                    lines=15,
+                    max_lines=20,
+                    interactive=False,
+                )
             refresh_btn = gr.Button("Refresh GPU Stats")
 
     submit_btn.click(
@@ -122,14 +152,14 @@ with gr.Blocks(title="Tmux Manager with GPU Monitor") as iface:
             model_size,
             force_kill,
             gpu_util,
+            new_param,
         ],
         outputs=output,
     )
 
     refresh_btn.click(fn=refresh_stats, inputs=[], outputs=gpu_monitor)
 
-    # Remove this line as it's no longer needed
-    # gpu_monitor.update(get_gpu_stats, every=5)
+    iface.launch()
 
 if __name__ == "__main__":
     iface.launch()

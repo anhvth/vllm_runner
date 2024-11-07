@@ -20,6 +20,7 @@ def parse_args():
     parser.add_argument("-m", "--model", type=str, default="QW32B")
     parser.add_argument("-mt", "--max_tokens", type=int, default=2048)
     parser.add_argument("-ip", "--is_prompt", action="store_true")
+    parser.add_argument("-o", "--output_file", type=str, default=None)
     return parser.parse_args()
 
 
@@ -80,10 +81,13 @@ def main():
         lambda row: run_one_row(row, args, lm, cache_dir, is_prompt), rows, 4
     )
     df = pd.DataFrame(output_rows)
-    output_file = (
-        args.input_df
-        + f".model_{args.model}_{args.column}_fold_{args.fold[0]}_{args.fold[1]}.parquet"
-    )
+    if args.output_file is None:
+        output_file = (
+            args.input_df
+            + f".model_{args.model}_{args.column}_fold_{args.fold[0]}_{args.fold[1]}.parquet"
+        )
+    else:
+        output_file = args.output_file
     df.to_parquet(output_file)
 
 

@@ -28,4 +28,9 @@ setup(
         "dspy-ai",
         "transformers",
     ],
+    entry_points={
+        "console_scripts": [
+            "vllm-client=vllm_runner.client_runner:main",
+        ],
+    },
 )

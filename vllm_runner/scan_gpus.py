@@ -16,13 +16,15 @@ def scan_available_gpus(util_threshold=0.9, mem_threshold=0.9):
         lines = result.stdout.decode("utf-8").strip().split("\n")
         available_gpus = []
         for line in lines:
-            gpu_id, util, mem_used, mem_total = line.split(", ")
-            util = float(util.strip(" %")) / 100
+            gpu_id, _, mem_used, mem_total = line.split(", ")
             mem_used = float(mem_used.strip(" MiB"))
             mem_total = float(mem_total.strip(" MiB"))
-            mem_util = mem_used / mem_total
+            mem_util = 1 - mem_used / mem_total
 
-            if util < util_threshold and mem_util < mem_threshold:
+            if mem_util > mem_threshold:
+                logger.info(
+                    f"GPU {gpu_id}: mem_util: {mem_util:.2f}"
+                )
                 available_gpus.append(gpu_id)
 
         logger.info(

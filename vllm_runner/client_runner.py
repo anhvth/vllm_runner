@@ -10,17 +10,20 @@ from vllm_runner import scan_vllm_process
 import argparse
 from vllm_runner.vllm_dspy import LLM
 
+CACHE_DIR = os.path.expanduser("~/.cache/vllm_runner")
+
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("-df", "--input_df", type=str, default="input_df.csv")
+    parser.add_argument("input_df", type=str, default="input_df.csv")
+    parser.add_argument("model", type=str, default="QW32B")
     parser.add_argument("-c", "--column", type=str, default="prompt")
     parser.add_argument("-f", "--fold", nargs=2, type=int, default=[0, 1])
-    parser.add_argument("-cd", "--cache_dir", type=str, default="cache")
-    parser.add_argument("-m", "--model", type=str, default="QW32B")
+    parser.add_argument("--cache_dir", type=str, default=CACHE_DIR)
     parser.add_argument("-mt", "--max_tokens", type=int, default=2048)
-    parser.add_argument("-ip", "--is_prompt", action="store_true")
+    parser.add_argument("-p", "--is_prompt", action="store_true")
     parser.add_argument("-o", "--output_file", type=str, default=None)
+    parser.add_argument("-w", "--workers", type=int, default=64)
     return parser.parse_args()
 
 
@@ -78,7 +81,7 @@ def main():
 
     rows = df.to_dict(orient="records")
     output_rows = multi_thread(
-        lambda row: run_one_row(row, args, lm, cache_dir, is_prompt), rows, 4
+        lambda row: run_one_row(row, args, lm, cache_dir, is_prompt), rows, args.workers
     )
     df = pd.DataFrame(output_rows)
     if args.output_file is None:

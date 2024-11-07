@@ -9,5 +9,6 @@ vllm_runner/vllm_dspy.py
 vllm_runner.egg-info/PKG-INFO
 vllm_runner.egg-info/SOURCES.txt
 vllm_runner.egg-info/dependency_links.txt
+vllm_runner.egg-info/entry_points.txt
 vllm_runner.egg-info/requires.txt
 vllm_runner.egg-info/top_level.txt

@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 load_dotenv("dotenv.pub")
 
 grep_name = os.environ.get("VLLM_PATH")
-print(grep_name)
 
 def scan_vllm_process() -> list[dict]:
     # example output [{'pid': 1066, 'port': '2800', 'model_name': 'Qwen2.5-72B-Instruct-AWQ'}, {'pid': 3335, 'port': '2801', 'model_name': 'Qwen2.5-32B-Instruct-AWQ'}]

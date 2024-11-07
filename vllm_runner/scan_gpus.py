@@ -1,7 +1,16 @@
+import os
 import subprocess
 import socket
 import time
 from loguru import logger
+
+# load dotenv
+from dotenv import load_dotenv
+
+load_dotenv("dotenv.pub")
+IGNORE_GPUS = [
+    int(gpu) for gpu in os.environ.get("IGNORE_GPUS", "").split(",") if gpu.strip()
+]
 
 
 def scan_available_gpus(util_threshold=0.9, mem_threshold=0.9):
@@ -17,14 +26,15 @@ def scan_available_gpus(util_threshold=0.9, mem_threshold=0.9):
         available_gpus = []
         for line in lines:
             gpu_id, _, mem_used, mem_total = line.split(", ")
+            if int(gpu_id) in IGNORE_GPUS:
+                continue
             mem_used = float(mem_used.strip(" MiB"))
             mem_total = float(mem_total.strip(" MiB"))
             mem_util = 1 - mem_used / mem_total
 
             if mem_util > mem_threshold:
-                logger.info(
-                    f"GPU {gpu_id}: mem_util: {mem_util:.2f}"
-                )
+                logger.info(f"GPU {gpu_id}: mem_util: {mem_util:.2f}")
+
                 available_gpus.append(gpu_id)
 
         logger.info(

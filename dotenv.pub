@@ -1,1 +1,2 @@
 VLLM_PATH=/home/ubuntu/.conda/envs/py311/bin/vllm
+IGNORE_GPUS="5,6"

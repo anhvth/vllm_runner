@@ -1,0 +1,1 @@
+apt-get install tmux fzf ripgrep lsof htop rsync

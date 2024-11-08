@@ -85,6 +85,7 @@ class LLM(LM):
         """
         model_to_servers: Dict[str, List[int]] = {}
         processes = scan_vllm_process()
+        import ipdb; ipdb.set_trace()
 
         for process in processes:
             if process["model_name"] and process["port"]:

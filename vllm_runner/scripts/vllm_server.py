@@ -34,7 +34,7 @@ def start_server(size_or_name, gpus, port_start, dry_run=False):
             return
         port = available_ports[0]
         # Prepare the command to start the server
-        tp = get_required_tp(size_or_name)
+        tp = len(selected_gpus)
         command = (
             f"CUDA_VISIBLE_DEVICES={gpu_ids} "
             f"python -m vllm.entrypoints.openai.api_server "

@@ -6,11 +6,10 @@ setup(
     packages=find_packages(),
     install_requires=[
         "gradio",
-        "loguru",
+        "loguru==0.7.2",
         "numpy==1.26.4",
         "requests==2.32.3",
         "xxhash==3.5.0",
-        "loguru==0.7.2",
         "fastcore==1.7.5",
         "debugpy==1.8.6",
         "ipywidgets==8.1.5",
@@ -23,14 +22,14 @@ setup(
         "pydantic==2.9.1",
         "speedy-utils",
         "python-dotenv",
-        "gradio",
         "openai",
         "dspy-ai",
         "transformers",
     ],
     entry_points={
         "console_scripts": [
-            "vllm-client=vllm_runner.client_runner:main",
+            "vllm-client=scripts.client_runner:main",
+            "vllm-server=scripts.vllm_server:main",
         ],
     },
 )

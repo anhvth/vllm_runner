@@ -1,2 +1,3 @@
 [console_scripts]
-vllm-client = vllm_runner.client_runner:main
+vllm-client = scripts.client_runner:main
+vllm-server = scripts.vllm_server:main

@@ -2,11 +2,10 @@ Metadata-Version: 2.1
 Name: vllm_runner
 Version: 0.1
 Requires-Dist: gradio
-Requires-Dist: loguru
+Requires-Dist: loguru==0.7.2
 Requires-Dist: numpy==1.26.4
 Requires-Dist: requests==2.32.3
 Requires-Dist: xxhash==3.5.0
-Requires-Dist: loguru==0.7.2
 Requires-Dist: fastcore==1.7.5
 Requires-Dist: debugpy==1.8.6
 Requires-Dist: ipywidgets==8.1.5
@@ -19,7 +18,6 @@ Requires-Dist: tabulate==0.9.0
 Requires-Dist: pydantic==2.9.1
 Requires-Dist: speedy-utils
 Requires-Dist: python-dotenv
-Requires-Dist: gradio
 Requires-Dist: openai
 Requires-Dist: dspy-ai
 Requires-Dist: transformers

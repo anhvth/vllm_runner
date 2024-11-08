@@ -32,6 +32,9 @@ def scan_vllm_process() -> list[dict]:
                 processes.append(process_info)
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
+        except Exception as e:
+            pass
+            # logger.error(f"Error: {e}")
     return processes
 
 if __name__ == "__main__":

@@ -9,10 +9,7 @@ from dotenv import load_dotenv
 from loguru import logger
 from tabulate import tabulate
 
-from vllm_runner.scan_gpus import (
-    scan_available_gpus,
-    scanfree_port,
-)
+from vllm_runner.scan_gpus import scan_available_gpus, scanfree_port
 from vllm_runner.scan_vllm_process import scan_vllm_process
 
 load_dotenv("dotenv.pub")
@@ -214,6 +211,7 @@ def get_model_selections() -> list:
     # Model paths
     glob_path = "../LLaMA-Factory/saves/*/*.awq/"
     model_paths = glob(glob_path)
+    model_paths = [os.path.abspath(path) for path in model_paths]
     # Combine and return
     return model_sizes + model_paths
 

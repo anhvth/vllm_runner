@@ -80,9 +80,8 @@ def main():
     os.makedirs(cache_dir, exist_ok=True)
 
     rows = df.to_dict(orient="records")
-    output_rows = multi_thread(
-        lambda row: run_one_row(row, args, lm, cache_dir, is_prompt), rows, args.workers
-    )
+    _run_one_row = lambda row: run_one_row(row, args, lm, cache_dir, is_prompt)
+    output_rows = multi_thread(_run_one_row, rows, args.workers)
     df = pd.DataFrame(output_rows)
     if args.output_file is None:
         output_file = (

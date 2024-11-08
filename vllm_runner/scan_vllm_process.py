@@ -5,10 +5,9 @@ import psutil
 from dotenv import load_dotenv
 load_dotenv("dotenv.pub")
 
-grep_name = os.environ.get("VLLM_PATH")
+grep_name = os.environ.get("VLLM_PATH", "vllm.entrypoints.openai.api_server")
 
 def scan_vllm_process() -> list[dict]:
-    # example output [{'pid': 1066, 'port': '2800', 'model_name': 'Qwen2.5-72B-Instruct-AWQ'}, {'pid': 3335, 'port': '2801', 'model_name': 'Qwen2.5-32B-Instruct-AWQ'}]
     processes = []
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
@@ -33,8 +32,7 @@ def scan_vllm_process() -> list[dict]:
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
         except Exception as e:
-            pass
-            # logger.error(f"Error: {e}")
+            logger.error(f"Error: {e}")
     return processes
 
 if __name__ == "__main__":

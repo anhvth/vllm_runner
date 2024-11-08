@@ -7,21 +7,10 @@ from speedy_utils import Clock
 from transformers import AutoTokenizer
 from vllm_runner.scan_vllm_process import scan_vllm_process
 
-# from tools.server import NUM_SERVERS, SERVER_BASE_PORT
 
-# Known models mapping
-# KNOWN_MODELS = {
-#     "QW72B": "Qwen2.5-72B-Instruct-AWQ",
-#     "QW32B": "Qwen2.5-32B-Instruct-AWQ",
-#     "QW7B": "Qwen2.5-7B-Instruct-AWQ",
-#     "QW14B": "Qwen2.5-14B-Instruct-AWQ",
-#     "QW1.5B": "Qwen2.5-1.5B-Instruct-AWQ",
-#     "QW1.5B-Math": "Qwen/Qwen2.5-Math-1.5B-Instruct",
-#     "QW7B": "Qwen2.5-7B-Instruct-AWQ",
-#     "QW7B-Math": "Qwen/Qwen2.5-Math-7B-Instruct",
-# }
 clock = Clock()
 KNOWN_MODELS = {}
+
 
 class LLM(LM):
     def __init__(

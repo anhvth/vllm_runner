@@ -13,7 +13,7 @@ IGNORE_GPUS = [
 ]
 
 
-def scan_available_gpus(util_threshold=0.9, mem_threshold=0.9):
+def scan_available_gpus( mem_threshold=0.9):
     """Scan available GPUs on the machine with utilization and memory usage less than thresholds."""
     try:
         result = subprocess.run(
@@ -38,7 +38,7 @@ def scan_available_gpus(util_threshold=0.9, mem_threshold=0.9):
                 available_gpus.append(gpu_id)
 
         logger.info(
-            f"Available GPUs with utilization < {util_threshold} and memory < {mem_threshold}: {available_gpus}"
+            f"Available GPUs  memory  {mem_threshold}: {available_gpus}"
         )
         return available_gpus
     except subprocess.CalledProcessError as e:

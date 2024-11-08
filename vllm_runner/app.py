@@ -116,6 +116,7 @@ def run_tmux_manager_gradio(
     force_kill,
     gpu_util,
     start_tmux,
+    
 ):
     session_name = "vllm_runner"
 
@@ -140,7 +141,7 @@ def run_tmux_manager_gradio(
         tp = get_required_tp(model_size)
 
     # Automatically find available GPUs
-    available_gpus = scan_available_gpus(util_threshold=gpu_util, mem_threshold=0.9)
+    available_gpus = scan_available_gpus(mem_threshold=gpu_util)
     if not available_gpus:
         return "No available GPUs found!"
 

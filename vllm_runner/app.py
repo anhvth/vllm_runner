@@ -10,7 +10,6 @@ from loguru import logger
 from tabulate import tabulate
 
 from vllm_runner.scan_gpus import (
-    kill_existing_vllm_processes,
     scan_available_gpus,
     scanfree_port,
 )

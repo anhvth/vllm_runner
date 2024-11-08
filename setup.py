@@ -28,8 +28,8 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "vllm-client=scripts.client_runner:main",
-            "vllm-server=scripts.vllm_server:main",
+            "vllm-client=vllm_runner.scripts.client_runner:main",
+            "vllm-server=vllm_runner.scripts.vllm_server:main",
         ],
     },
 )

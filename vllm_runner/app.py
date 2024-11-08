@@ -113,7 +113,6 @@ def run_tmux_manager_gradio(
     tp,
     model_selection,
     port_start,
-    force_kill,
     gpu_util,
     start_tmux,
     
@@ -180,17 +179,6 @@ def run_tmux_manager_gradio(
     )
 
     window_name = f"vllm_{port_start}"
-
-    # Handle force kill option
-    if force_kill:
-        kill_existing_vllm_processes()
-        try:
-            subprocess.run(
-                f"tmux kill-session -t {session_name}", shell=True, check=True
-            )
-            logger.info(f"Killed existing tmux session: {session_name}")
-        except subprocess.CalledProcessError:
-            logger.warning(f"No existing tmux session named '{session_name}' to kill.")
 
     session_exists = (
         subprocess.run(
@@ -275,9 +263,9 @@ with gr.Blocks(title="vLLM Manager with GPU Monitor") as demo:
                         value="32B",
                     )
                     port_start = gr.Number(label="Port Start", value=2800)
-                    force_kill = gr.Checkbox(
-                        label="Force Kill Existing Processes", value=False
-                    )
+                    # force_kill = gr.Checkbox(
+                    #     label="Force Kill Existing Processes", value=False
+                    # )
                     gpu_util = gr.Slider(
                         label="GPU Utilization Threshold",
                         minimum=0.0,
@@ -295,7 +283,7 @@ with gr.Blocks(title="vLLM Manager with GPU Monitor") as demo:
                     tp,
                     model_selection,
                     port_start,
-                    force_kill,
+                    # force_kill,
                     gpu_util,
                     start_tmux,
                 ],

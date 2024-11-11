@@ -33,6 +33,10 @@ def get_parser():
     start_parser.add_argument(
         "--max-tokens", type=int, default=8000, help="Max tokens per request"
     )
+    # Add extra arguments
+    start_parser.add_argument(
+        "--extra", type=str, help="Extra arguments to pass to the server"
+    )
 
     stop_parser = subparsers.add_parser(
         "stop_at", help="Stop vLLM servers at specified GPUs"
@@ -78,7 +82,14 @@ def resolve_model_name(size_or_name):
 
 
 def start_server(
-    size_or_name, gpus, port_start, lora_modules=None, dry_run=False, gpu_util=0.9
+    size_or_name,
+    gpus,
+    port_start,
+    lora_modules=None,
+    dry_run=False,
+    gpu_util=0.9,
+    max_model_len=8000,
+    extra_args=None,
 ):
     model_name, model_serve_name = resolve_model_name(size_or_name)
     try:
@@ -107,8 +118,11 @@ def start_server(
             f"--port {port} "
             f"--host 0.0.0.0 "
             f"--gpu-memory-utilization {gpu_util} "
+            f"--max-model-len {max_model_len} "
             f"--disable-log-requests"
         )
+        if extra_args:
+            command += f" {extra_args}"
 
         # Add LoRA support if modules are specified
         if lora_modules:
@@ -249,6 +263,8 @@ def main():
                 lora_modules,
                 args.dry_run,
                 gpu_util=args.gpu_util,
+                max_model_len=args.max_tokens,
+                extra_args=args.extra,
             )
     elif args.command == "stop_at":
         list_gpus = list(args.gpus)

@@ -119,6 +119,7 @@ def start_server(
             f"--host 0.0.0.0 "
             f"--gpu-memory-utilization {gpu_util} "
             f"--max-model-len {max_model_len} "
+            f"--enable-prefix-caching "
             f"--disable-log-requests"
         )
         if extra_args:

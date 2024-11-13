@@ -1,11 +1,15 @@
+from speedy_utils import fprint, speedy_timer
+
+speedy_timer.start()
 import argparse
 import os
 import signal
 import subprocess
-from speedy_utils import fprint
 from vllm_runner.app import get_required_tp, scanfree_port
 from vllm_runner.scan_gpus import free_gpu, scan_available_gpus
 from vllm_runner.scan_vllm_process import scan_vllm_process
+
+speedy_timer.update_task("imports")
 
 
 def get_parser():
@@ -13,7 +17,9 @@ def get_parser():
     subparsers = parser.add_subparsers(dest="command")
 
     start_parser = subparsers.add_parser("start", help="Start a vLLM server")
-    start_parser.add_argument("model_size", type=str, help="Model size (e.g., 72B)")
+    start_parser.add_argument(
+        "--model_size", "-z", type=str, help="Model size (e.g., 72B)"
+    )
     start_parser.add_argument(
         "--gpus", type=str, required=True, help="GPUs to use (e.g., 0123)"
     )
@@ -57,11 +63,11 @@ def get_parser():
     )
 
     args = parser.parse_args()
-    if len(str(args.model_size)) < 10:
-        # must be number
-        assert (
-            args.model_size.isdigit()
-        ), f"Model size must be a number, got {args.model_size}"
+    # if len(str(args.model_size)) < 10:
+    #     # must be number
+    #     assert (
+    #         args.model_size.isdigit()
+    #     ), f"Model size must be a number, got {args.model_size}"
     return parser, args
 
 
@@ -283,3 +289,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    speedy_timer.print_task_table()

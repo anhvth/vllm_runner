@@ -3,11 +3,13 @@ import subprocess
 from loguru import logger
 import psutil
 from dotenv import load_dotenv
+from speedy_utils import speedy_timer
 load_dotenv("dotenv.pub")
 
 grep_name = os.environ.get("VLLM_PATH", "vllm.entrypoints.openai.api_server")
 
 def scan_vllm_process() -> list[dict]:
+    speedy_timer.tick()
     processes = []
     for proc in psutil.process_iter(['pid', 'name', 'cmdline']):
         try:
@@ -33,6 +35,7 @@ def scan_vllm_process() -> list[dict]:
             pass
         except Exception as e:
             logger.error(f"Error: {e}")
+    speedy_timer.update_task("scan_vllm_process")
     return processes
 
 if __name__ == "__main__":

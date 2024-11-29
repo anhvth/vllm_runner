@@ -3,6 +3,8 @@ setup.py
 vllm_runner/__init__.py
 vllm_runner/app.py
 vllm_runner/gpu_info.py
+vllm_runner/overwrite_qwen_for_embedding.py
+vllm_runner/run_embed.py
 vllm_runner/scan_gpus.py
 vllm_runner/scan_vllm_process.py
 vllm_runner/vllm_dspy.py

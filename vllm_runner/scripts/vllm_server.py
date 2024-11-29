@@ -63,20 +63,10 @@ def get_parser():
     )
 
     args = parser.parse_args()
-    # if len(str(args.model_size)) < 10:
-    #     # must be number
-    #     assert (
-    #         args.model_size.isdigit()
-    #     ), f"Model size must be a number, got {args.model_size}"
     return parser, args
 
 
 parser, args = get_parser()
-
-
-from vllm_runner.app import get_required_tp, scanfree_port
-from vllm_runner.scan_gpus import free_gpu, scan_available_gpus
-from vllm_runner.scan_vllm_process import scan_vllm_process
 
 
 def resolve_model_name(size_or_name):
